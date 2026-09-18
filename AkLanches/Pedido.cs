@@ -2,7 +2,12 @@
 {
     class Pedido
     {
-        public List<ItemCardapio> Itens { get; set; } = new List<ItemCardapio>();
+        public List<ItemCardapio> Itens { get; private set; }
+
+        public Pedido()
+        {
+            Itens = new List<ItemCardapio>();
+        }
 
         public double CalcularTotal()
         {
@@ -13,7 +18,5 @@
             }
             return total;
         }
-
-
     }
 }

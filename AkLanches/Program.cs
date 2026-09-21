@@ -75,7 +75,7 @@
                                 ? lanche.ObterDescricaoComExtras()
                                 : item.Descricao;
 
-                            Console.WriteLine($"  [{i + 1}] {descricaoItem} (Cod: {item.Codigo}) - R$ {item.CalcularPrecoFinal():F2}");
+                            Console.WriteLine($"   [{i + 1}] {descricaoItem} (Cod: {item.Codigo}) - R$ {item.CalcularPrecoFinal():F2}");
                         }
                         Console.WriteLine();
                     }
@@ -106,7 +106,7 @@
                             MenuRemoverItem(pedido);
                             break;
                         case "5":
-                            executando = MenuFinalizarPedido(pedido);
+                            MenuFinalizarPedido(pedido);
                             break;
                         case "0":
                             ExibirCabecalho();
@@ -174,12 +174,15 @@
 
                     Lanche lanche = new Lanche(codigo, nome, preco);
 
+                    // Adiciona o lanche no carrinho antes de customizar
+                    pedido.Itens.Add(lanche);
+
                     ResultadoNavegacao resultado = MenuCustomizarAdicionaisLanche(lanche, pedido, ehNovoItem: true);
 
-                    if (resultado == ResultadoNavegacao.Concluir)
+                    if (resultado == ResultadoNavegacao.VoltarTelaAnterior)
                     {
-                        pedido.Itens.Add(lanche);
-                        return;
+                        // Se voltar à tela anterior ao criar um novo item, desfaz a inserção no carrinho
+                        pedido.Itens.Remove(lanche);
                     }
                     else if (resultado == ResultadoNavegacao.VoltarMenuPrincipal)
                     {
@@ -197,7 +200,6 @@
 
         enum ResultadoNavegacao
         {
-            Concluir,
             VoltarTelaAnterior,
             VoltarMenuPrincipal
         }
@@ -209,24 +211,38 @@
                 try
                 {
                     ExibirCabecalho();
-                    ExibirStatusCarrinhoEIncentivo(pedido, ehNovoItem ? lanche : null);
+                    ExibirStatusCarrinhoEIncentivo(pedido);
 
-                    Console.WriteLine($"CUSTOMIZANDO LANCHE: {lanche.ObterDescricaoComExtras()}\n");
+                    // Contagem do total geral de adicionais presentes neste lanche
+                    int totalAdicionais = lanche.IngredientesExtras.Sum(x => x.Quantidade);
+
+                    Console.WriteLine($"CUSTOMIZANDO LANCHE: {lanche.ObterDescricaoComExtras()}");
+
+                    // Mensagem fixa informando o limite geral de 10 adicionais
+                    EscreverColorido($"[Limite de Adicionais: {totalAdicionais}/10 no total]\n", ConsoleColor.Yellow);
+
                     Console.WriteLine("ADICIONAIS");
                     Console.WriteLine("1. Queijo Extra     (+ R$ 2,00)");
                     Console.WriteLine("2. Bacon Extra      (+ R$ 3,00)");
                     Console.WriteLine("3. Hambúrguer Extra (+ R$ 5,00)");
                     Console.WriteLine("4. Remover um Adicional\n");
-                    Console.WriteLine("5. Concluir");
                     Console.WriteLine("9. Voltar à tela anterior");
                     Console.WriteLine("0. Voltar ao Menu Principal\n");
                     Console.Write("Opção: ");
 
                     string opAdicional = Console.ReadLine() ?? "";
 
-                    if (opAdicional == "5") return ResultadoNavegacao.Concluir;
                     if (opAdicional == "9") return ResultadoNavegacao.VoltarTelaAnterior;
                     if (opAdicional == "0") return ResultadoNavegacao.VoltarMenuPrincipal;
+
+                    // Validação antes de adicionar novos ingredientes
+                    if (opAdicional is "1" or "2" or "3")
+                    {
+                        if (totalAdicionais >= 10)
+                        {
+                            throw new InvalidOperationException("Limite máximo de 10 adicionais atingido para este lanche.");
+                        }
+                    }
 
                     switch (opAdicional)
                     {
@@ -300,7 +316,7 @@
 
                     ResultadoNavegacao resultado = MenuSelecionarTamanhoBebida(codigo, nome, precoBase, pedido);
 
-                    if (resultado == ResultadoNavegacao.Concluir || resultado == ResultadoNavegacao.VoltarMenuPrincipal)
+                    if (resultado == ResultadoNavegacao.VoltarMenuPrincipal)
                     {
                         return;
                     }
@@ -346,7 +362,7 @@
 
                     Bebida bebida = new Bebida(codigo, $"{nome} ({tamanho})", precoBase, tamanho);
                     pedido.Itens.Add(bebida);
-                    return ResultadoNavegacao.Concluir;
+                    return ResultadoNavegacao.VoltarMenuPrincipal;
                 }
                 catch (Exception ex)
                 {
@@ -381,7 +397,7 @@
                     {
                         var item = pedido.Itens[i];
                         string desc = item is Lanche lanche ? lanche.ObterDescricaoComExtras() : item.Descricao;
-                        Console.WriteLine($"  [{i + 1}] {desc} (Cod: {item.Codigo})");
+                        Console.WriteLine($"   [{i + 1}] {desc} (Cod: {item.Codigo})");
                     }
                     Console.WriteLine("\n0. Voltar ao Menu Principal");
                     Console.Write("\nOpção: ");
@@ -478,13 +494,13 @@
                     }
 
                     ExibirCabecalho();
-                    ExibirStatusCarrinhoEIncentivo(pedido, ehNovoItem ? lanche : null);
+                    ExibirStatusCarrinhoEIncentivo(pedido);
 
                     Console.WriteLine("SELECIONE O ADICIONAL PARA REMOVER:\n");
                     for (int i = 0; i < lanche.IngredientesExtras.Count; i++)
                     {
                         var extra = lanche.IngredientesExtras[i];
-                        Console.WriteLine($"  [{i + 1}] {extra.Nome} (Qtd: {extra.Quantidade})");
+                        Console.WriteLine($"   [{i + 1}] {extra.Nome} (Qtd: {extra.Quantidade})");
                     }
                     Console.WriteLine("\n9. Voltar à tela anterior");
                     Console.Write("\nOpção: ");
@@ -536,7 +552,7 @@
                     {
                         var item = pedido.Itens[i];
                         string descricao = item is Lanche lanche ? lanche.ObterDescricaoComExtras() : item.Descricao;
-                        Console.WriteLine($"  [{i + 1}] {descricao} (Cod: {item.Codigo})");
+                        Console.WriteLine($"   [{i + 1}] {descricao} (Cod: {item.Codigo})");
                     }
                     Console.WriteLine("\n0. Voltar ao Menu Principal");
                     Console.Write("\nDigite a posição na lista: ");
@@ -604,7 +620,7 @@
             }
         }
 
-        static bool MenuFinalizarPedido(Pedido pedido)
+        static void MenuFinalizarPedido(Pedido pedido)
         {
             ExibirCabecalho();
             ExibirStatusCarrinhoEIncentivo(pedido);
@@ -614,7 +630,7 @@
                 Console.WriteLine("O carrinho está vazio. Adicione itens antes de finalizar.");
                 Console.WriteLine("\nPressione qualquer tecla para voltar...");
                 Console.ReadKey();
-                return true;
+                return;
             }
 
             Console.WriteLine("RESUMO DO PEDIDO\n");
@@ -622,7 +638,7 @@
             foreach (var item in pedido.Itens)
             {
                 string descricao = item is Lanche lanche ? lanche.ObterDescricaoComExtras() : item.Descricao;
-                Console.WriteLine($"  • {descricao} (Cod: {item.Codigo}): R$ {item.CalcularPrecoFinal():F2}");
+                Console.WriteLine($"   • {descricao} (Cod: {item.Codigo}): R$ {item.CalcularPrecoFinal():F2}");
             }
 
             decimal subtotal = pedido.CalcularSubtotal();
@@ -645,10 +661,11 @@
 
             Console.WriteLine("--------------------------------------------------");
             EscreverColorido("Pedido enviado com sucesso! Obrigado pela preferência.", ConsoleColor.Cyan);
-            Console.WriteLine("\nPressione qualquer tecla para sair...");
+            Console.WriteLine("\nPressione qualquer tecla para iniciar um novo atendimento...");
             Console.ReadKey();
 
-            return false;
+
+            pedido.Itens.Clear();
         }
     }
 }

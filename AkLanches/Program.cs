@@ -5,8 +5,52 @@
         static void ExibirCabecalho()
         {
             Console.Clear();
-            Console.WriteLine("AKLANCHES - SISTEMA DE PEDIDOS");
+            EscreverColorido("AKLANCHES - SISTEMA DE PEDIDOS", ConsoleColor.Cyan);
             Console.WriteLine("--------------------------------------------------\n");
+        }
+
+        static void EscreverColorido(string texto, ConsoleColor cor, bool quebrarLinha = true)
+        {
+            Console.ForegroundColor = cor;
+            if (quebrarLinha)
+                Console.WriteLine(texto);
+            else
+                Console.Write(texto);
+            Console.ResetColor();
+        }
+
+        static void ExibirStatusCarrinhoEIncentivo(Pedido pedido, ItemCardapio itemEmConstrucao = null)
+        {
+            decimal subtotal = pedido.CalcularSubtotal();
+
+            if (itemEmConstrucao != null)
+            {
+                subtotal += itemEmConstrucao.CalcularPrecoFinal();
+            }
+
+            const decimal META_DESCONTO = 30.00m;
+            int quantidadeItens = pedido.Itens.Count + (itemEmConstrucao != null ? 1 : 0);
+
+            Console.Write($"Itens no carrinho: {quantidadeItens} | Subtotal: ");
+            EscreverColorido($"R$ {subtotal:F2}", ConsoleColor.White);
+
+            if (subtotal == 0)
+            {
+                EscreverColorido("[Dica: Pedidos acima de R$ 30,00 ganham 10% de desconto!]", ConsoleColor.DarkGray);
+            }
+            else if (subtotal < META_DESCONTO)
+            {
+                decimal quantoFalta = META_DESCONTO - subtotal;
+                Console.Write("[Faltam ");
+                EscreverColorido($"R$ {quantoFalta:F2}", ConsoleColor.Yellow, false);
+                EscreverColorido(" para você LIBERAR 10% DE DESCONTO!]", ConsoleColor.DarkYellow);
+            }
+            else
+            {
+                EscreverColorido("[PARABÉNS! Você conquistou 10% de DESCONTO!]", ConsoleColor.Green);
+            }
+
+            Console.WriteLine();
         }
 
         static void Main(string[] args)
@@ -16,378 +60,595 @@
 
             while (executando)
             {
-                ExibirCabecalho();
-
-                Console.WriteLine($"Itens no carrinho: {pedido.Itens.Count} | Total Parcial: R$ {pedido.CalcularTotal():F2}\n");
-
-                if (pedido.Itens.Count > 0)
-                {
-                    Console.WriteLine("Itens do Pedido:");
-                    for (int i = 0; i < pedido.Itens.Count; i++)
-                    {
-                        var item = pedido.Itens[i];
-                        Console.WriteLine($"  [{i + 1}] {item.Descricao} (SKU: {item.Codigo}) - R$ {item.CalcularPrecoFinal():F2}");
-                    }
-                    Console.WriteLine();
-                }
-
-                Console.WriteLine("MENU PRINCIPAL");
-                Console.WriteLine("1. Adicionar Lanche");
-                Console.WriteLine("2. Adicionar Bebida");
-                Console.WriteLine("3. Remover Item");
-                Console.WriteLine("4. Finalizar Pedido");
-                Console.WriteLine("0. Sair");
-                Console.Write("\nOpção: ");
-
-                string opcao = Console.ReadLine();
-
                 try
                 {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    if (pedido.Itens.Count > 0)
+                    {
+                        Console.WriteLine("Itens do Pedido:");
+                        for (int i = 0; i < pedido.Itens.Count; i++)
+                        {
+                            var item = pedido.Itens[i];
+                            string descricaoItem = item is Lanche lanche
+                                ? lanche.ObterDescricaoComExtras()
+                                : item.Descricao;
+
+                            Console.WriteLine($"  [{i + 1}] {descricaoItem} (Cod: {item.Codigo}) - R$ {item.CalcularPrecoFinal():F2}");
+                        }
+                        Console.WriteLine();
+                    }
+
+                    Console.WriteLine("MENU PRINCIPAL");
+                    Console.WriteLine("1. Adicionar Lanche");
+                    Console.WriteLine("2. Adicionar Bebida");
+                    Console.WriteLine("3. Editar Item do Pedido");
+                    Console.WriteLine("4. Remover Item do Pedido");
+                    Console.WriteLine("5. Finalizar Pedido");
+                    Console.WriteLine("0. Sair");
+                    Console.Write("\nOpção: ");
+
+                    string opcao = Console.ReadLine() ?? "";
+
                     switch (opcao)
                     {
                         case "1":
-                            bool menuLancheAtivo = true;
-                            while (menuLancheAtivo)
-                            {
-                                try
-                                {
-                                    ExibirCabecalho();
-                                    Console.WriteLine("LANCHES\n");
-                                    Console.WriteLine("1. X-Burguer (R$ 15,00) [Cod: LAN-101]");
-                                    Console.WriteLine("2. X-Salada (R$ 18,00)  [Cod: LAN-102]");
-                                    Console.WriteLine("3. X-Bacon (R$ 22,00)   [Cod: LAN-103]");
-                                    Console.WriteLine("0. Voltar ao menu principal\n");
-                                    Console.Write("Escolha o lanche: ");
-
-                                    string opLanche = Console.ReadLine();
-
-                                    if (opLanche == "0") break;
-
-                                    string codigoLanche = "";
-                                    string nomeLanche = "";
-                                    double precoLanche = 0.0;
-
-                                    switch (opLanche)
-                                    {
-                                        case "1":
-                                            codigoLanche = "LAN-101";
-                                            nomeLanche = "X-Burguer";
-                                            precoLanche = 15.00;
-                                            break;
-                                        case "2":
-                                            codigoLanche = "LAN-102";
-                                            nomeLanche = "X-Salada";
-                                            precoLanche = 18.00;
-                                            break;
-                                        case "3":
-                                            codigoLanche = "LAN-103";
-                                            nomeLanche = "X-Bacon";
-                                            precoLanche = 22.00;
-                                            break;
-                                        default:
-                                            throw new ArgumentException("Opção de lanche inválida.");
-                                    }
-
-                                    Lanche lanche = new Lanche(codigoLanche, nomeLanche, precoLanche);
-
-                                    bool menuAdicionalAtivo = true;
-                                    while (menuAdicionalAtivo)
-                                    {
-                                        try
-                                        {
-                                            ExibirCabecalho();
-                                            Console.WriteLine($"LANCHE SELECIONADO: {lanche.Descricao}\n");
-                                            Console.WriteLine("ADICIONAIS (R$ 2,00 cada ingrediente extra)");
-                                            Console.WriteLine("1. Queijo Extra");
-                                            Console.WriteLine("2. Bacon Extra");
-                                            Console.WriteLine("3. Hambúrguer Extra");
-                                            Console.WriteLine("4. Sem adicionais");
-                                            Console.WriteLine("0. Voltar ao menu principal\n");
-                                            Console.Write("Opção: ");
-
-                                            string opAdicional = Console.ReadLine();
-
-                                            if (opAdicional == "0") return;
-
-                                            switch (opAdicional)
-                                            {
-                                                case "1":
-                                                    lanche.Ingredientes.Add("Queijo Extra");
-                                                    lanche.Descricao += " + Queijo Extra";
-                                                    break;
-                                                case "2":
-                                                    lanche.Ingredientes.Add("Bacon Extra");
-                                                    lanche.Descricao += " + Bacon Extra";
-                                                    break;
-                                                case "3":
-                                                    lanche.Ingredientes.Add("Hambúrguer Extra");
-                                                    lanche.Descricao += " + Hambúrguer Extra";
-                                                    break;
-                                                case "4":
-                                                    break;
-                                                default:
-                                                    throw new ArgumentException("Opção de adicional inválida.");
-                                            }
-
-                                            pedido.Itens.Add(lanche);
-                                            menuAdicionalAtivo = false;
-                                            menuLancheAtivo = false;
-                                        }
-                                        catch (ArgumentException ex)
-                                        {
-                                            Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
-                                            Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
-                                            Console.ReadKey();
-                                        }
-                                    }
-                                }
-                                catch (ArgumentException ex)
-                                {
-                                    Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
-                                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
-                                    Console.ReadKey();
-                                }
-                            }
+                            MenuAdicionarLanche(pedido);
                             break;
-
                         case "2":
-                            bool menuBebidaAtivo = true;
-                            while (menuBebidaAtivo)
-                            {
-                                try
-                                {
-                                    ExibirCabecalho();
-                                    Console.WriteLine("BEBIDAS\n");
-                                    Console.WriteLine("1. Água Mineral (R$ 3,00) [Cod: BEB-201]");
-                                    Console.WriteLine("2. Coca-Cola (R$ 5,00)     [Cod: BEB-202]");
-                                    Console.WriteLine("3. Suco Natural (R$ 8,00)  [Cod: BEB-203]");
-                                    Console.WriteLine("0. Voltar ao menu principal\n");
-                                    Console.Write("Escolha a bebida: ");
-
-                                    string opBebida = Console.ReadLine();
-
-                                    if (opBebida == "0") break;
-
-                                    string codigoBebida = "";
-                                    string nomeBebida = "";
-                                    double precoBaseBebida = 0.0;
-
-                                    switch (opBebida)
-                                    {
-                                        case "1":
-                                            codigoBebida = "BEB-201";
-                                            nomeBebida = "Água Mineral";
-                                            precoBaseBebida = 3.00;
-                                            break;
-                                        case "2":
-                                            codigoBebida = "BEB-202";
-                                            nomeBebida = "Coca-Cola";
-                                            precoBaseBebida = 5.00;
-                                            break;
-                                        case "3":
-                                            codigoBebida = "BEB-203";
-                                            nomeBebida = "Suco Natural";
-                                            precoBaseBebida = 8.00;
-                                            break;
-                                        default:
-                                            throw new ArgumentException("Opção de bebida inválida.");
-                                    }
-
-                                    bool menuTamanhoAtivo = true;
-                                    while (menuTamanhoAtivo)
-                                    {
-                                        try
-                                        {
-                                            ExibirCabecalho();
-                                            Console.WriteLine($"TAMANHO ({nomeBebida})\n");
-                                            Console.WriteLine("1. Pequeno (Preço padrão)");
-                                            Console.WriteLine("2. Médio (+ R$ 1,50)");
-                                            Console.WriteLine("3. Grande (+ R$ 3,00)");
-                                            Console.WriteLine("0. Voltar ao menu principal\n");
-                                            Console.Write("Opção: ");
-
-                                            string opTamanho = Console.ReadLine();
-
-                                            if (opTamanho == "0") return;
-
-                                            string tamanhoTexto = "";
-
-                                            switch (opTamanho)
-                                            {
-                                                case "1":
-                                                    tamanhoTexto = "pequeno";
-                                                    break;
-                                                case "2":
-                                                    tamanhoTexto = "medio";
-                                                    break;
-                                                case "3":
-                                                    tamanhoTexto = "grande";
-                                                    break;
-                                                default:
-                                                    throw new ArgumentException("Opção de tamanho inválida.");
-                                            }
-
-                                            Bebida bebida = new Bebida(codigoBebida, $"{nomeBebida} ({tamanhoTexto})", precoBaseBebida, tamanhoTexto);
-
-                                            pedido.Itens.Add(bebida);
-                                            menuTamanhoAtivo = false;
-                                            menuBebidaAtivo = false;
-                                        }
-                                        catch (ArgumentException ex)
-                                        {
-                                            Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
-                                            Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
-                                            Console.ReadKey();
-                                        }
-                                    }
-                                }
-                                catch (ArgumentException ex)
-                                {
-                                    Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
-                                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
-                                    Console.ReadKey();
-                                }
-                            }
+                            MenuAdicionarBebida(pedido);
                             break;
-
                         case "3":
-                            bool menuRemocaoAtivo = true;
-                            while (menuRemocaoAtivo)
-                            {
-                                try
-                                {
-                                    ExibirCabecalho();
-                                    Console.WriteLine("REMOVER ITEM\n");
-
-                                    if (pedido.Itens.Count == 0)
-                                    {
-                                        Console.WriteLine("O carrinho está vazio.");
-                                        Console.WriteLine("\nPressione qualquer tecla para voltar...");
-                                        Console.ReadKey();
-                                        break;
-                                    }
-
-                                    Console.WriteLine("Selecione a posição do item que deseja remover:\n");
-                                    for (int i = 0; i < pedido.Itens.Count; i++)
-                                    {
-                                        Console.WriteLine($"  [{i + 1}] {pedido.Itens[i].Descricao} (Cod: {pedido.Itens[i].Codigo})");
-                                    }
-                                    Console.WriteLine("  [0] Voltar ao menu principal");
-                                    Console.Write("\nDigite a posição na lista: ");
-
-                                    string entradaRemocao = Console.ReadLine();
-
-                                    if (entradaRemocao == "0") break;
-
-                                    if (!int.TryParse(entradaRemocao, out int numeroItem) || numeroItem < 1 || numeroItem > pedido.Itens.Count)
-                                    {
-                                        throw new ArgumentOutOfRangeException(null, "A posição selecionada não existe na lista.");
-                                    }
-
-                                    int indiceRemover = numeroItem - 1;
-                                    var itemParaRemover = pedido.Itens[indiceRemover];
-
-                                    bool menuConfirmacaoAtivo = true;
-                                    while (menuConfirmacaoAtivo)
-                                    {
-                                        try
-                                        {
-                                            ExibirCabecalho();
-                                            Console.WriteLine("CONFIRMAÇÃO DE REMOÇÃO\n");
-                                            Console.WriteLine($"Tem certeza que deseja remover '{itemParaRemover.Descricao}' (Cod: {itemParaRemover.Codigo})?");
-                                            Console.WriteLine("1. Sim, remover");
-                                            Console.WriteLine("2. Não, cancelar");
-                                            Console.Write("\nOpção: ");
-
-                                            string opConfirmacao = Console.ReadLine();
-
-                                            switch (opConfirmacao)
-                                            {
-                                                case "1":
-                                                    pedido.Itens.RemoveAt(indiceRemover);
-                                                    Console.WriteLine($"\n'{itemParaRemover.Descricao}' foi removido com sucesso!");
-                                                    Console.WriteLine("\nPressione qualquer tecla para continuar...");
-                                                    Console.ReadKey();
-                                                    menuConfirmacaoAtivo = false;
-                                                    menuRemocaoAtivo = false;
-                                                    break;
-
-                                                case "2":
-                                                    Console.WriteLine("\nOperação cancelada. O item permanece no carrinho.");
-                                                    Console.WriteLine("\nPressione qualquer tecla para continuar...");
-                                                    Console.ReadKey();
-                                                    menuConfirmacaoAtivo = false;
-                                                    menuRemocaoAtivo = false;
-                                                    break;
-
-                                                default:
-                                                    throw new ArgumentException("Opção de confirmação inválida. Digite 1 para Sim ou 2 para Não.");
-                                            }
-                                        }
-                                        catch (ArgumentException ex)
-                                        {
-                                            Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
-                                            Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
-                                            Console.ReadKey();
-                                        }
-                                    }
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
-                                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
-                                    Console.ReadKey();
-                                }
-                            }
+                            MenuEditarPedido(pedido);
                             break;
-
                         case "4":
-                            ExibirCabecalho();
-
-                            if (pedido.Itens.Count == 0)
-                            {
-                                Console.WriteLine("O carrinho está vazio. Adicione itens antes de finalizar.");
-                                Console.WriteLine("\nPressione qualquer tecla para voltar...");
-                                Console.ReadKey();
-                                break;
-                            }
-
-                            Console.WriteLine("RESUMO DO PEDIDO\n");
-
-                            foreach (var item in pedido.Itens)
-                            {
-                                Console.WriteLine($"  • {item.Descricao} (Cod: {item.Codigo}): R$ {item.CalcularPrecoFinal():F2}");
-                            }
-
-                            Console.WriteLine($"\nTotal: R$ {pedido.CalcularTotal():F2}\n");
-                            Console.WriteLine("Pedido enviado com sucesso! Obrigado pela preferência.");
-                            Console.WriteLine("\nPressione qualquer tecla para sair...");
-                            Console.ReadKey();
-
-                            executando = false;
+                            MenuRemoverItem(pedido);
                             break;
-
+                        case "5":
+                            executando = MenuFinalizarPedido(pedido);
+                            break;
                         case "0":
                             ExibirCabecalho();
-                            Console.WriteLine("SISTEMA ENCERRADO\n");
+                            EscreverColorido("SISTEMA ENCERRADO\n", ConsoleColor.Yellow);
                             Console.WriteLine("Obrigado por utilizar o AKLanches.");
                             Console.WriteLine("\nPressione qualquer tecla para fechar...");
                             Console.ReadKey();
-
                             executando = false;
                             break;
-
                         default:
                             throw new ArgumentException("Opção do menu principal inválida.");
                     }
                 }
-                catch (ArgumentException ex)
+                catch (Exception ex)
                 {
-                    Console.WriteLine($"\n[ERRO DE VALIDAÇÃO]: {ex.Message}");
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
                     Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
                     Console.ReadKey();
                 }
             }
+        }
+
+        static void MenuAdicionarLanche(Pedido pedido)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    Console.WriteLine("SELEÇÃO DE LANCHE\n");
+                    Console.WriteLine("1. X-Burguer (R$ 15,00) [Cod: LAN-101]");
+                    Console.WriteLine("2. X-Salada  (R$ 18,00) [Cod: LAN-102]");
+                    Console.WriteLine("3. X-Bacon   (R$ 22,00) [Cod: LAN-103]\n");
+                    Console.WriteLine("0. Voltar ao Menu Principal\n");
+                    Console.Write("Escolha o lanche: ");
+
+                    string opLanche = Console.ReadLine() ?? "";
+                    if (opLanche == "0") return;
+
+                    string codigo = opLanche switch
+                    {
+                        "1" => "LAN-101",
+                        "2" => "LAN-102",
+                        "3" => "LAN-103",
+                        _ => throw new ArgumentException("Opção de lanche inválida.")
+                    };
+
+                    string nome = opLanche switch
+                    {
+                        "1" => "X-Burguer",
+                        "2" => "X-Salada",
+                        "3" => "X-Bacon",
+                        _ => ""
+                    };
+
+                    decimal preco = opLanche switch
+                    {
+                        "1" => 15.00m,
+                        "2" => 18.00m,
+                        "3" => 22.00m,
+                        _ => 0.0m
+                    };
+
+                    Lanche lanche = new Lanche(codigo, nome, preco);
+
+                    ResultadoNavegacao resultado = MenuCustomizarAdicionaisLanche(lanche, pedido, ehNovoItem: true);
+
+                    if (resultado == ResultadoNavegacao.Concluir)
+                    {
+                        pedido.Itens.Add(lanche);
+                        return;
+                    }
+                    else if (resultado == ResultadoNavegacao.VoltarMenuPrincipal)
+                    {
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        enum ResultadoNavegacao
+        {
+            Concluir,
+            VoltarTelaAnterior,
+            VoltarMenuPrincipal
+        }
+
+        static ResultadoNavegacao MenuCustomizarAdicionaisLanche(Lanche lanche, Pedido pedido, bool ehNovoItem = false)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido, ehNovoItem ? lanche : null);
+
+                    Console.WriteLine($"CUSTOMIZANDO LANCHE: {lanche.ObterDescricaoComExtras()}\n");
+                    Console.WriteLine("ADICIONAIS");
+                    Console.WriteLine("1. Queijo Extra     (+ R$ 2,00)");
+                    Console.WriteLine("2. Bacon Extra      (+ R$ 3,00)");
+                    Console.WriteLine("3. Hambúrguer Extra (+ R$ 5,00)");
+                    Console.WriteLine("4. Remover um Adicional\n");
+                    Console.WriteLine("5. Concluir");
+                    Console.WriteLine("9. Voltar à tela anterior");
+                    Console.WriteLine("0. Voltar ao Menu Principal\n");
+                    Console.Write("Opção: ");
+
+                    string opAdicional = Console.ReadLine() ?? "";
+
+                    if (opAdicional == "5") return ResultadoNavegacao.Concluir;
+                    if (opAdicional == "9") return ResultadoNavegacao.VoltarTelaAnterior;
+                    if (opAdicional == "0") return ResultadoNavegacao.VoltarMenuPrincipal;
+
+                    switch (opAdicional)
+                    {
+                        case "1":
+                            lanche.AdicionarIngrediente("Queijo Extra", 2.00m);
+                            break;
+                        case "2":
+                            lanche.AdicionarIngrediente("Bacon Extra", 3.00m);
+                            break;
+                        case "3":
+                            lanche.AdicionarIngrediente("Hambúrguer Extra", 5.00m);
+                            break;
+                        case "4":
+                            SubMenuRemoverAdicional(lanche, pedido, ehNovoItem);
+                            break;
+                        default:
+                            throw new ArgumentException("Opção de adicional inválida.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para continuar...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static void MenuAdicionarBebida(Pedido pedido)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    Console.WriteLine("BEBIDAS\n");
+                    Console.WriteLine("1. Água Mineral (R$ 3,00) [Cod: BEB-201]");
+                    Console.WriteLine("2. Coca-Cola     (R$ 5,00) [Cod: BEB-202]");
+                    Console.WriteLine("3. Suco Natural  (R$ 8,00) [Cod: BEB-203]\n");
+                    Console.WriteLine("0. Voltar ao Menu Principal\n");
+                    Console.Write("Escolha a bebida: ");
+
+                    string opBebida = Console.ReadLine() ?? "";
+                    if (opBebida == "0") return;
+
+                    string codigo = opBebida switch
+                    {
+                        "1" => "BEB-201",
+                        "2" => "BEB-202",
+                        "3" => "BEB-203",
+                        _ => throw new ArgumentException("Opção de bebida inválida.")
+                    };
+
+                    string nome = opBebida switch
+                    {
+                        "1" => "Água Mineral",
+                        "2" => "Coca-Cola",
+                        "3" => "Suco Natural",
+                        _ => ""
+                    };
+
+                    decimal precoBase = opBebida switch
+                    {
+                        "1" => 3.00m,
+                        "2" => 5.00m,
+                        "3" => 8.00m,
+                        _ => 0.0m
+                    };
+
+                    ResultadoNavegacao resultado = MenuSelecionarTamanhoBebida(codigo, nome, precoBase, pedido);
+
+                    if (resultado == ResultadoNavegacao.Concluir || resultado == ResultadoNavegacao.VoltarMenuPrincipal)
+                    {
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static ResultadoNavegacao MenuSelecionarTamanhoBebida(string codigo, string nome, decimal precoBase, Pedido pedido)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    Console.WriteLine($"TAMANHO ({nome})\n");
+                    Console.WriteLine("1. Pequeno (Preço padrão)");
+                    Console.WriteLine("2. Médio (+ R$ 1,50)");
+                    Console.WriteLine("3. Grande (+ R$ 3,00)\n");
+                    Console.WriteLine("9. Voltar à tela anterior");
+                    Console.WriteLine("0. Voltar ao Menu Principal\n");
+                    Console.Write("Opção: ");
+
+                    string opTamanho = Console.ReadLine() ?? "";
+
+                    if (opTamanho == "9") return ResultadoNavegacao.VoltarTelaAnterior;
+                    if (opTamanho == "0") return ResultadoNavegacao.VoltarMenuPrincipal;
+
+                    string tamanho = opTamanho switch
+                    {
+                        "1" => "pequeno",
+                        "2" => "medio",
+                        "3" => "grande",
+                        _ => throw new ArgumentException("Opção de tamanho inválida.")
+                    };
+
+                    Bebida bebida = new Bebida(codigo, $"{nome} ({tamanho})", precoBase, tamanho);
+                    pedido.Itens.Add(bebida);
+                    return ResultadoNavegacao.Concluir;
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static void MenuEditarPedido(Pedido pedido)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    Console.WriteLine("EDITAR ITEM DO PEDIDO\n");
+
+                    if (pedido.Itens.Count == 0)
+                    {
+                        Console.WriteLine("O carrinho está vazio. Não há itens para editar.");
+                        Console.WriteLine("\nPressione qualquer tecla para voltar ao menu principal...");
+                        Console.ReadKey();
+                        return;
+                    }
+
+                    Console.WriteLine("Selecione qual item deseja alterar:\n");
+                    for (int i = 0; i < pedido.Itens.Count; i++)
+                    {
+                        var item = pedido.Itens[i];
+                        string desc = item is Lanche lanche ? lanche.ObterDescricaoComExtras() : item.Descricao;
+                        Console.WriteLine($"  [{i + 1}] {desc} (Cod: {item.Codigo})");
+                    }
+                    Console.WriteLine("\n0. Voltar ao Menu Principal");
+                    Console.Write("\nOpção: ");
+
+                    string entrada = Console.ReadLine() ?? "";
+                    if (entrada == "0") return;
+
+                    if (int.TryParse(entrada, out int pos) && pos >= 1 && pos <= pedido.Itens.Count)
+                    {
+                        var itemSelecionado = pedido.Itens[pos - 1];
+
+                        if (itemSelecionado is Lanche lanche)
+                        {
+                            MenuCustomizarAdicionaisLanche(lanche, pedido, ehNovoItem: false);
+                        }
+                        else if (itemSelecionado is Bebida bebida)
+                        {
+                            MenuEditarTamanhoBebida(bebida, pedido);
+                        }
+                        return;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Opção de seleção inválida.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static void MenuEditarTamanhoBebida(Bebida bebida, Pedido pedido)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    Console.WriteLine($"ALTERAR TAMANHO DA BEBIDA ({bebida.Descricao})\n");
+                    Console.WriteLine("1. Pequeno (Preço padrão)");
+                    Console.WriteLine("2. Médio (+ R$ 1,50)");
+                    Console.WriteLine("3. Grande (+ R$ 3,00)\n");
+                    Console.WriteLine("9. Voltar à tela anterior");
+                    Console.WriteLine("0. Voltar ao Menu Principal\n");
+                    Console.Write("Opção: ");
+
+                    string opTamanho = Console.ReadLine() ?? "";
+                    if (opTamanho == "9" || opTamanho == "0") return;
+
+                    string novoTamanho = opTamanho switch
+                    {
+                        "1" => "pequeno",
+                        "2" => "medio",
+                        "3" => "grande",
+                        _ => throw new ArgumentException("Opção de tamanho inválida.")
+                    };
+
+                    string nomeBase = bebida.Descricao.Split('(')[0].Trim();
+                    bebida.Tamanho = novoTamanho;
+                    bebida.Descricao = $"{nomeBase} ({novoTamanho})";
+
+                    EscreverColorido("\nTamanho da bebida alterado com sucesso!", ConsoleColor.Green);
+                    Console.WriteLine("Pressione qualquer tecla para continuar...");
+                    Console.ReadKey();
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static void SubMenuRemoverAdicional(Lanche lanche, Pedido pedido, bool ehNovoItem)
+        {
+            while (true)
+            {
+                try
+                {
+                    if (lanche.IngredientesExtras.Count == 0)
+                    {
+                        EscreverColorido("\nEste lanche ainda não possui nenhum adicional para remover.", ConsoleColor.Yellow);
+                        Console.WriteLine("Pressione qualquer tecla para continuar...");
+                        Console.ReadKey();
+                        return;
+                    }
+
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido, ehNovoItem ? lanche : null);
+
+                    Console.WriteLine("SELECIONE O ADICIONAL PARA REMOVER:\n");
+                    for (int i = 0; i < lanche.IngredientesExtras.Count; i++)
+                    {
+                        var extra = lanche.IngredientesExtras[i];
+                        Console.WriteLine($"  [{i + 1}] {extra.Nome} (Qtd: {extra.Quantidade})");
+                    }
+                    Console.WriteLine("\n9. Voltar à tela anterior");
+                    Console.Write("\nOpção: ");
+
+                    string opRemover = Console.ReadLine() ?? "";
+                    if (opRemover == "9") return;
+
+                    if (int.TryParse(opRemover, out int pos) && pos >= 1 && pos <= lanche.IngredientesExtras.Count)
+                    {
+                        string nomeIngrediente = lanche.IngredientesExtras[pos - 1].Nome;
+                        lanche.RemoverIngrediente(nomeIngrediente);
+                        return;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Posição selecionada inválida.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static void MenuRemoverItem(Pedido pedido)
+        {
+            while (true)
+            {
+                try
+                {
+                    ExibirCabecalho();
+                    ExibirStatusCarrinhoEIncentivo(pedido);
+
+                    Console.WriteLine("REMOVER ITEM DO PEDIDO\n");
+
+                    if (pedido.Itens.Count == 0)
+                    {
+                        Console.WriteLine("O carrinho está vazio.");
+                        Console.WriteLine("\nPressione qualquer tecla para voltar...");
+                        Console.ReadKey();
+                        return;
+                    }
+
+                    Console.WriteLine("Selecione a posição do item que deseja remover:\n");
+                    for (int i = 0; i < pedido.Itens.Count; i++)
+                    {
+                        var item = pedido.Itens[i];
+                        string descricao = item is Lanche lanche ? lanche.ObterDescricaoComExtras() : item.Descricao;
+                        Console.WriteLine($"  [{i + 1}] {descricao} (Cod: {item.Codigo})");
+                    }
+                    Console.WriteLine("\n0. Voltar ao Menu Principal");
+                    Console.Write("\nDigite a posição na lista: ");
+
+                    string entrada = Console.ReadLine() ?? "";
+                    if (entrada == "0") return;
+
+                    if (!int.TryParse(entrada, out int numeroItem) || numeroItem < 1 || numeroItem > pedido.Itens.Count)
+                    {
+                        throw new ArgumentOutOfRangeException(null, "A posição selecionada não existe na lista.");
+                    }
+
+                    int indice = numeroItem - 1;
+                    var itemParaRemover = pedido.Itens[indice];
+
+                    while (true)
+                    {
+                        try
+                        {
+                            ExibirCabecalho();
+                            ExibirStatusCarrinhoEIncentivo(pedido);
+
+                            Console.WriteLine("CONFIRMAÇÃO DE REMOÇÃO\n");
+                            Console.WriteLine($"Tem certeza que deseja remover o item '{itemParaRemover.Descricao}'?");
+                            Console.WriteLine("1. Sim, remover");
+                            Console.WriteLine("2. Não, cancelar");
+                            Console.Write("\nOpção: ");
+
+                            string opConfirmacao = Console.ReadLine() ?? "";
+
+                            if (opConfirmacao == "1")
+                            {
+                                pedido.Itens.RemoveAt(indice);
+                                EscreverColorido("\nItem removido com sucesso!", ConsoleColor.Green);
+                                Console.WriteLine("\nPressione qualquer tecla para continuar...");
+                                Console.ReadKey();
+                                return;
+                            }
+                            else if (opConfirmacao == "2")
+                            {
+                                Console.WriteLine("\nOperação cancelada.");
+                                Console.WriteLine("\nPressione qualquer tecla para continuar...");
+                                Console.ReadKey();
+                                return;
+                            }
+                            else
+                            {
+                                throw new ArgumentException("Opção de confirmação inválida.");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                            Console.WriteLine("Pressione qualquer tecla para tentar novamente...");
+                            Console.ReadKey();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    EscreverColorido($"\n[ERRO]: {ex.Message}", ConsoleColor.Red);
+                    Console.WriteLine("Pressione qualquer tecla para tentar novamente na tela de remoção...");
+                    Console.ReadKey();
+                }
+            }
+        }
+
+        static bool MenuFinalizarPedido(Pedido pedido)
+        {
+            ExibirCabecalho();
+            ExibirStatusCarrinhoEIncentivo(pedido);
+
+            if (pedido.Itens.Count == 0)
+            {
+                Console.WriteLine("O carrinho está vazio. Adicione itens antes de finalizar.");
+                Console.WriteLine("\nPressione qualquer tecla para voltar...");
+                Console.ReadKey();
+                return true;
+            }
+
+            Console.WriteLine("RESUMO DO PEDIDO\n");
+
+            foreach (var item in pedido.Itens)
+            {
+                string descricao = item is Lanche lanche ? lanche.ObterDescricaoComExtras() : item.Descricao;
+                Console.WriteLine($"  • {descricao} (Cod: {item.Codigo}): R$ {item.CalcularPrecoFinal():F2}");
+            }
+
+            decimal subtotal = pedido.CalcularSubtotal();
+            ICalculadorDesconto regraDesconto = new DescontoPedidoGrande();
+            decimal valorDesconto = regraDesconto.CalcularDesconto(subtotal);
+            decimal totalFinal = pedido.CalcularTotalFinal(regraDesconto);
+
+            Console.WriteLine("--------------------------------------------------");
+            Console.Write("Subtotal: R$ ");
+            Console.WriteLine($"{subtotal:F2}");
+
+            if (valorDesconto > 0)
+            {
+                Console.Write("Desconto Aplicado (Promoção > R$ 30,00): ");
+                EscreverColorido($"- R$ {valorDesconto:F2}", ConsoleColor.Green);
+            }
+
+            Console.Write("Total a Pagar: ");
+            EscreverColorido($"R$ {totalFinal:F2}\n", ConsoleColor.Green);
+
+            Console.WriteLine("--------------------------------------------------");
+            EscreverColorido("Pedido enviado com sucesso! Obrigado pela preferência.", ConsoleColor.Cyan);
+            Console.WriteLine("\nPressione qualquer tecla para sair...");
+            Console.ReadKey();
+
+            return false;
         }
     }
 }

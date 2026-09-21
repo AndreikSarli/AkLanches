@@ -19,6 +19,7 @@
             Console.ResetColor();
         }
 
+        // Exibe o estado atual do pedido e quanto falta para atingir a regra de desconto.
         static void ExibirStatusCarrinhoEIncentivo(Pedido pedido, ItemCardapio itemEmConstrucao = null)
         {
             decimal subtotal = pedido.CalcularSubtotal();
@@ -65,6 +66,7 @@
                     ExibirCabecalho();
                     ExibirStatusCarrinhoEIncentivo(pedido);
 
+                    // Só exibe a lista quando há itens; mantém a tela inicial limpa quando o carrinho está vazio.
                     if (pedido.Itens.Count > 0)
                     {
                         Console.WriteLine("Itens do Pedido:");
@@ -174,14 +176,14 @@
 
                     Lanche lanche = new Lanche(codigo, nome, preco);
 
-                    // Adiciona o lanche no carrinho antes de customizar
+                    // O item entra no carrinho antes da customização para o subtotal refletir os adicionais em tempo real.
                     pedido.Itens.Add(lanche);
 
                     ResultadoNavegacao resultado = MenuCustomizarAdicionaisLanche(lanche, pedido, ehNovoItem: true);
 
                     if (resultado == ResultadoNavegacao.VoltarTelaAnterior)
                     {
-                        // Se voltar à tela anterior ao criar um novo item, desfaz a inserção no carrinho
+                        // Se o usuário desistir da customização, desfaz a inserção para não deixar um item incompleto no pedido.
                         pedido.Itens.Remove(lanche);
                     }
                     else if (resultado == ResultadoNavegacao.VoltarMenuPrincipal)
@@ -213,12 +215,10 @@
                     ExibirCabecalho();
                     ExibirStatusCarrinhoEIncentivo(pedido);
 
-                    // Contagem do total geral de adicionais presentes neste lanche
                     int totalAdicionais = lanche.IngredientesExtras.Sum(x => x.Quantidade);
 
                     Console.WriteLine($"CUSTOMIZANDO LANCHE: {lanche.ObterDescricaoComExtras()}");
 
-                    // Mensagem fixa informando o limite geral de 10 adicionais
                     EscreverColorido($"[Limite de Adicionais: {totalAdicionais}/10 no total]\n", ConsoleColor.Yellow);
 
                     Console.WriteLine("ADICIONAIS");
@@ -235,7 +235,6 @@
                     if (opAdicional == "9") return ResultadoNavegacao.VoltarTelaAnterior;
                     if (opAdicional == "0") return ResultadoNavegacao.VoltarMenuPrincipal;
 
-                    // Validação antes de adicionar novos ingredientes
                     if (opAdicional is "1" or "2" or "3")
                     {
                         if (totalAdicionais >= 10)

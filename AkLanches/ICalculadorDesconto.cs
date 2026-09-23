@@ -1,12 +1,12 @@
 ﻿namespace AkLanches
 {
-    // Contrato para cálculo de desconto
+    // Regra que o desconto vai seguir.
     interface ICalculadorDesconto
     {
         decimal CalcularDesconto(decimal valorTotal);
     }
 
-    // Pedidos sem desconto
+    // Quando não tem desconto.
     class SemDesconto : ICalculadorDesconto
     {
         public decimal CalcularDesconto(decimal valorTotal)
@@ -15,7 +15,7 @@
         }
     }
 
-    // Desconto de 10% para pedidos a partir de R$ 30,00
+    // Desconto usado quando o pedido chega em R$ 30,00.
     class DescontoPedidoGrande : ICalculadorDesconto
     {
         public decimal CalcularDesconto(decimal valorTotal)
@@ -24,6 +24,7 @@
             {
                 return valorTotal * 0.10m; // 10% de desconto
             }
+
             return 0.0m;
         }
     }

@@ -1,11 +1,12 @@
 ﻿namespace AkLanches
 {
 
+    // Dados que todo item do cardápio tem.
     abstract class ItemCardapio
     {
-        public string Codigo { get; set; }
-        public string Descricao { get; set; }
-        public decimal PrecoBase { get; set; }
+        public string Codigo { get; private set; }
+        public string Descricao { get; protected set; }
+        public decimal PrecoBase { get; private set; }
 
         public ItemCardapio(string codigo, string descricao, decimal precoBase)
         {
@@ -15,6 +16,7 @@
         }
 
 
+        // Cada tipo de item pode calcular o próprio preço.
         public virtual decimal CalcularPrecoFinal()
         {
             return PrecoBase;
@@ -22,6 +24,7 @@
     }
 
 
+    // Parte dos lanches e dos adicionais.
     class Lanche : ItemCardapio
     {
         public List<IngredienteExtra> IngredientesExtras { get; private set; }
@@ -33,6 +36,7 @@
         }
 
         // Agora recebe também o preço unitário do adicional
+        // Adiciona um extra ao lanche.
         public void AdicionarIngrediente(string nome, decimal precoUnitario)
         {
             var itemExistente = IngredientesExtras.Find(i => i.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
@@ -53,6 +57,7 @@
 
 
         // Decrementa a quantidade de um ingrediente (1 por vez)
+        // Remove uma unidade do extra escolhido.
         public void RemoverIngrediente(string nome)
         {
             var itemExistente = IngredientesExtras.Find(i => i.Nome.Equals(nome, StringComparison.OrdinalIgnoreCase));
@@ -73,6 +78,8 @@
         }
 
         // Soma o valor individual de cada ingrediente multiplicado pela sua quantidade
+        // Soma o preço do lanche com os extras.
+        // O tamanho escolhido pode aumentar o preço.
         public override decimal CalcularPrecoFinal()
         {
             decimal valorExtras = 0;
@@ -84,6 +91,7 @@
             return PrecoBase + valorExtras;
         }
 
+        // Monta a descrição do lanche com os extras escolhidos.
         public string ObterDescricaoComExtras()
         {
             if (IngredientesExtras.Count == 0) return Descricao;
@@ -106,9 +114,11 @@
     }
 
 
+    // Parte das bebidas e dos tamanhos.
     class Bebida : ItemCardapio
     {
-        private string _tamanho = "pequeno";
+        // Tamanho usado quando a bebida é criada.
+        private string _tamanho = "300ml";
 
         public string Tamanho
         {
@@ -121,16 +131,18 @@
                 }
 
                 string val = value.Trim().ToLower();
-                if (val != "pequeno" && val != "medio" && val != "grande")
+
+                if (val != "300ml" && val != "500ml" && val != "700ml")
                 {
-                    throw new ArgumentException("Tamanho inválido. Opções aceitas: pequeno, medio, grande.");
+                    throw new ArgumentException(
+                        "Tamanho inválido. Opções aceitas: 300ml, 500ml e 700ml.");
                 }
 
                 _tamanho = val;
             }
         }
 
-        public Bebida(string codigo, string descricao, decimal precoBase, string tamanho = "pequeno")
+        public Bebida(string codigo, string descricao, decimal precoBase, string tamanho = "300ml")
             : base(codigo, descricao, precoBase)
         {
             Tamanho = tamanho;
@@ -142,19 +154,28 @@
 
             switch (Tamanho.ToLower())
             {
-                case "pequeno":
+                case "300ml":
                     break;
-                case "medio":
+                case "500ml":
                     precoFinal += 1.50m;
                     break;
-                case "grande":
-                    precoFinal += 3.00m;
+                case "700ml":
+                    precoFinal += 2.50m;
                     break;
                 default:
                     throw new ArgumentException("Tamanho inválido.");
             }
 
             return precoFinal;
+        }
+
+        // Usado quando o tamanho da bebida é alterado no pedido.
+        public void AlterarTamanho(string novoTamanho)
+        {
+            Tamanho = novoTamanho;
+
+            string nomeBase = Descricao.Split('(')[0].Trim();
+            Descricao = $"{nomeBase} ({Tamanho})";
         }
     }
 }

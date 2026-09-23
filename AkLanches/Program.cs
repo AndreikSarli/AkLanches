@@ -2,6 +2,7 @@
 {
     class Program
     {
+        // Mostra o nome do sistema no começo das telas.
         static void ExibirCabecalho()
         {
             Console.Clear();
@@ -20,6 +21,7 @@
         }
 
         // Exibe o estado atual do pedido e quanto falta para atingir a regra de desconto.
+        // Mostra quantos itens existem e o valor do pedido.
         static void ExibirStatusCarrinhoEIncentivo(Pedido pedido, ItemCardapio itemEmConstrucao = null)
         {
             decimal subtotal = pedido.CalcularSubtotal();
@@ -54,6 +56,7 @@
             Console.WriteLine();
         }
 
+        // Aqui começa o programa e o menu principal.
         static void Main(string[] args)
         {
             Pedido pedido = new Pedido();
@@ -131,6 +134,7 @@
             }
         }
 
+        // Escolha do lanche e montagem dos adicionais.
         static void MenuAdicionarLanche(Pedido pedido)
         {
             while (true)
@@ -206,6 +210,7 @@
             VoltarMenuPrincipal
         }
 
+        // Tela para colocar ou tirar adicionais do lanche.
         static ResultadoNavegacao MenuCustomizarAdicionaisLanche(Lanche lanche, Pedido pedido, bool ehNovoItem = false)
         {
             while (true)
@@ -270,6 +275,7 @@
             }
         }
 
+        // Escolha da bebida antes de escolher o tamanho.
         static void MenuAdicionarBebida(Pedido pedido)
         {
             while (true)
@@ -329,6 +335,7 @@
             }
         }
 
+        // Escolha do tamanho da bebida.
         static ResultadoNavegacao MenuSelecionarTamanhoBebida(string codigo, string nome, decimal precoBase, Pedido pedido)
         {
             while (true)
@@ -339,9 +346,9 @@
                     ExibirStatusCarrinhoEIncentivo(pedido);
 
                     Console.WriteLine($"TAMANHO ({nome})\n");
-                    Console.WriteLine("1. Pequeno (Preço padrão)");
-                    Console.WriteLine("2. Médio (+ R$ 1,50)");
-                    Console.WriteLine("3. Grande (+ R$ 3,00)\n");
+                    Console.WriteLine("1. 300ml (Preço padrão)");
+                    Console.WriteLine("2. 500ml (+ R$ 1,50)");
+                    Console.WriteLine("3. 700ml (+ R$ 2,50)\n");
                     Console.WriteLine("9. Voltar à tela anterior");
                     Console.WriteLine("0. Voltar ao Menu Principal\n");
                     Console.Write("Opção: ");
@@ -353,9 +360,9 @@
 
                     string tamanho = opTamanho switch
                     {
-                        "1" => "pequeno",
-                        "2" => "medio",
-                        "3" => "grande",
+                        "1" => "300ml",
+                        "2" => "500ml",
+                        "3" => "700ml",
                         _ => throw new ArgumentException("Opção de tamanho inválida.")
                     };
 
@@ -372,6 +379,7 @@
             }
         }
 
+        // Aqui o usuário escolhe um item que já está no pedido.
         static void MenuEditarPedido(Pedido pedido)
         {
             while (true)
@@ -432,6 +440,7 @@
             }
         }
 
+        // Altera somente o tamanho da bebida escolhida.
         static void MenuEditarTamanhoBebida(Bebida bebida, Pedido pedido)
         {
             while (true)
@@ -442,9 +451,9 @@
                     ExibirStatusCarrinhoEIncentivo(pedido);
 
                     Console.WriteLine($"ALTERAR TAMANHO DA BEBIDA ({bebida.Descricao})\n");
-                    Console.WriteLine("1. Pequeno (Preço padrão)");
-                    Console.WriteLine("2. Médio (+ R$ 1,50)");
-                    Console.WriteLine("3. Grande (+ R$ 3,00)\n");
+                    Console.WriteLine("1. 300ml (Preço padrão)");
+                    Console.WriteLine("2. 500ml (+ R$ 1,50)");
+                    Console.WriteLine("3. 700ml (+ R$ 2,50)\n");
                     Console.WriteLine("9. Voltar à tela anterior");
                     Console.WriteLine("0. Voltar ao Menu Principal\n");
                     Console.Write("Opção: ");
@@ -454,15 +463,13 @@
 
                     string novoTamanho = opTamanho switch
                     {
-                        "1" => "pequeno",
-                        "2" => "medio",
-                        "3" => "grande",
+                        "1" => "300ml",
+                        "2" => "500ml",
+                        "3" => "700ml",
                         _ => throw new ArgumentException("Opção de tamanho inválida.")
                     };
 
-                    string nomeBase = bebida.Descricao.Split('(')[0].Trim();
-                    bebida.Tamanho = novoTamanho;
-                    bebida.Descricao = $"{nomeBase} ({novoTamanho})";
+                    bebida.AlterarTamanho(novoTamanho);
 
                     EscreverColorido("\nTamanho da bebida alterado com sucesso!", ConsoleColor.Green);
                     Console.WriteLine("Pressione qualquer tecla para continuar...");
@@ -478,6 +485,7 @@
             }
         }
 
+        // Mostra os extras do lanche para escolher qual tirar.
         static void SubMenuRemoverAdicional(Lanche lanche, Pedido pedido, bool ehNovoItem)
         {
             while (true)
@@ -527,6 +535,7 @@
             }
         }
 
+        // Remove um item inteiro do pedido.
         static void MenuRemoverItem(Pedido pedido)
         {
             while (true)
@@ -619,6 +628,7 @@
             }
         }
 
+        // Mostra o resumo, calcula o desconto e fecha o pedido.
         static void MenuFinalizarPedido(Pedido pedido)
         {
             ExibirCabecalho();
